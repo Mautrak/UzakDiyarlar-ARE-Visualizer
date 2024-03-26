@@ -1,0 +1,62 @@
+/* src/components/AreaVisualizer.css */
+
+.area-visualizer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.file-upload {
+  margin-bottom: 20px;
+}
+
+.file-upload-label {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.file-upload-input {
+  display: none;
+}
+
+.area-content {
+  display: flex;
+}
+
+.sidebar {
+  flex: 0 0 250px;
+  padding-right: 20px;
+}
+
+.section-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.section-list li {
+  padding: 10px;
+  cursor: pointer;
+}
+
+.section-list li.active {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.main-content {
+  flex: 1;
+}
+
+.room,
+.mobile,
+.object {
+  margin-bottom: 20px;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}

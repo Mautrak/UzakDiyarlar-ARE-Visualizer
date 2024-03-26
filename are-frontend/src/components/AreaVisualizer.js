@@ -4,9 +4,11 @@ import React, { useState } from 'react';
 import Mobile from './Mobile';
 import Object from './Object';
 import Room from './Room';
+import './AreaVisualizer.css';
 
 function AreaVisualizer() {
   const [areaData, setAreaData] = useState(null);
+  const [selectedSection, setSelectedSection] = useState('rooms');
 
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
@@ -161,34 +163,69 @@ function AreaVisualizer() {
     console.log('Parsed data:', parsedData);
     setAreaData(parsedData);
   };
+  const renderSection = () => {
+    switch (selectedSection) {
+      case 'rooms':
+        return areaData.rooms.map((room, index) => (
+          <Room key={index} room={room} />
+        ));
+      case 'mobiles':
+        return areaData.mobiles.map((mobile, index) => (
+          <Mobile key={index} mobile={mobile} />
+        ));
+      case 'objects':
+        return areaData.objects.map((object, index) => (
+          <Object key={index} object={object} />
+        ));
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="area-visualizer">
-      <h2>Upload Area File</h2>
+      <h1>Merc Area File Visualizer</h1>
 
       <div className="file-upload">
-        <input type="file" accept=".are" onChange={handleFileUpload} />
+        <label htmlFor="file-input" className="file-upload-label">
+          Upload Area File
+        </label>
+        <input
+          id="file-input"
+          type="file"
+          accept=".are"
+          onChange={handleFileUpload}
+          className="file-upload-input"
+        />
       </div>
 
       {areaData && (
         <div className="area-content">
-          <h3>Area Information:</h3>
-          <pre>{JSON.stringify(areaData.areaInfo, null, 2)}</pre>
-
-          <h3>Mobiles:</h3>
-          {areaData.mobiles.map((mobile, index) => (
-            <Mobile key={index} mobile={mobile} />
-          ))}
-
-          <h3>Objects:</h3>
-          {areaData.objects.map((object, index) => (
-            <Object key={index} object={object} />
-          ))}
-
-          <h3>Rooms:</h3>
-          {areaData.rooms.map((room, index) => (
-            <Room key={index} room={room} />
-          ))}
+          <div className="sidebar">
+            <h2>Area Information</h2>
+            <pre>{JSON.stringify(areaData.areaInfo, null, 2)}</pre>
+            <ul className="section-list">
+              <li
+                className={selectedSection === 'rooms' ? 'active' : ''}
+                onClick={() => setSelectedSection('rooms')}
+              >
+                Rooms
+              </li>
+              <li
+                className={selectedSection === 'mobiles' ? 'active' : ''}
+                onClick={() => setSelectedSection('mobiles')}
+              >
+                Mobiles
+              </li>
+              <li
+                className={selectedSection === 'objects' ? 'active' : ''}
+                onClick={() => setSelectedSection('objects')}
+              >
+                Objects
+              </li>
+            </ul>
+          </div>
+          <div className="main-content">{renderSection()}</div>
         </div>
       )}
     </div>
