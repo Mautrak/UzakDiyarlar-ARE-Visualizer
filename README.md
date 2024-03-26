@@ -3,7 +3,6 @@ This project aims to provide a web-based tool for visualizing and exploring Merc
 Table of Contents
 
     Introduction
-    Features
     Technologies Used
     Usage
     Area File Format

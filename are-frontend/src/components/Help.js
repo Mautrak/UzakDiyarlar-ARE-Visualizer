@@ -3,7 +3,7 @@ import React from 'react';
 function Help(props) {
   return (
 
-      Keywords: {props.help.keywords}
+      Keywords: {pro:s.help.keywords}
       Text:
       {props.help.text}
 

@@ -3,10 +3,9 @@ import React from 'react';
 function Room(props) {
   const room = props.room;
 
-  // Assuming room.exits is an array of objects with properties like direction and to_room
   const exitsList = room.exits.map((exit, index) => (
     <li key={index}>
-      {exit.direction}: {exit.to_room}
+      {exit.direction}: {exit.toRoom}
     </li>
   ));
 
@@ -19,8 +18,8 @@ function Room(props) {
 
       <h2>Details:</h2>
       <ul>
-        <li>Room Flags: {room.room_flags}</li>
-        <li>Sector Type: {room.sector_type}</li>
+        <li>Room Flags: {room.roomFlags}</li>
+        <li>Sector Type: {room.sectorType}</li>
       </ul>
 
       <h2>Exits:</h2>
