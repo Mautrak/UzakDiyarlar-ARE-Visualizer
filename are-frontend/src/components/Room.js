@@ -37,24 +37,32 @@ const parseRoomData = (roomData) => {
     exits: [],
   };
 
+  let currentField = 'name';
+  let descriptionLines = [];
+
   roomData.lines.forEach((line) => {
-    if (!room.name) {
+    if (currentField === 'name') {
       room.name = line.trim();
-    } else if (!room.description && line !== '~') {
-      room.description += line + '\n';
-    } else if (line.startsWith('D')) {
+      currentField = 'description';
+    } else if (currentField === 'description') {
+      if (line.startsWith('~')) {
+        room.description = descriptionLines.join(' ').trim();
+        currentField = 'exits';
+      } else {
+        descriptionLines.push(line.trim());
+      }
+    } else if (currentField === 'exits' && line.startsWith('D')) {
       const exitData = line.split(/~/);
       const direction = exitData[0].slice(1).trim();
-      const description = exitData[1] ? exitData[1].trim() : '';
-      const keywords = exitData[2] ? exitData[2].trim() : '';
-      const locks = exitData[3] ? parseInt(exitData[3].trim()) : 0;
-      const key = exitData[4] ? parseInt(exitData[4].trim()) : 0;
-      const toRoom = exitData[5] ? parseInt(exitData[5].trim()) : 0;
-      room.exits.push({ direction, description, keywords, locks, key, toRoom });
+      const toRoom = exitData[5] ? parseInt(exitData[5].trim(), 10) : 0;
+      room.exits.push({ direction, toRoom });
     }
   });
 
-  room.description = room.description.trim();
+  if (currentField === 'description') {
+    room.description = descriptionLines.join(' ').trim();
+  }
+
   return room;
 };
 
