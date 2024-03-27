@@ -2,32 +2,6 @@
 
 import React from 'react';
 
-function Room({ roomData }) {
-  const room = Room.parseRoomData(roomData);
-
-  return (
-    <div className="room">
-      <h2>{room.name}</h2>
-      <p>{room.description}</p>
-      <h3>Exits:</h3>
-      <ul>
-        {room.exits.map((exit, index) => (
-          <li key={index}>
-            {exit.direction} - To Room: {exit.toRoom}
-            <br />
-            Description: {exit.description}
-            <br />
-            Keywords: {exit.keywords}
-            <br />
-            Locks: {exit.locks}
-            <br />
-            Key: {exit.key}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
 
 const parseRoomData = (roomData) => {
   const room = {
@@ -54,7 +28,11 @@ const parseRoomData = (roomData) => {
     } else if (currentField === 'exits' && line.startsWith('D')) {
       const exitData = line.split(/~/);
       const direction = exitData[0].slice(1).trim();
-      const toRoom = exitData[5] ? parseInt(exitData[5].trim(), 10) : 0;
+      let toRoom = 0;
+      if (exitData.length >= 5) {
+        const toRoomData = exitData[4].trim().split(/\s+/);
+        toRoom = parseInt(toRoomData[toRoomData.length - 1], 10);
+      }
       room.exits.push({ direction, toRoom });
     }
   });
@@ -66,6 +44,34 @@ const parseRoomData = (roomData) => {
   return room;
 };
 
-Room.parseRoomData = parseRoomData;
 
-export default Room;
+const formatExits = (exits) => {
+  const directions = ['north', 'east', 'south', 'west', 'up', 'down'];
+  const formattedExits = exits
+    .map((exit) => {
+      const directionIndex = parseInt(exit.direction, 10);
+      if (!isNaN(directionIndex) && directionIndex >= 0 && directionIndex < directions.length) {
+        const direction = directions[directionIndex];
+        return `${direction.charAt(0).toUpperCase() + direction.slice(1)} (${exit.toRoom})`;
+      }
+      return null;
+    })
+    .filter((exit) => exit !== null);
+  return formattedExits.join(', ');
+};
+
+
+function Room({ roomData }) {
+  const room = parseRoomData(roomData);
+
+  return (
+    <div className="room">
+      <h2>{room.name}</h2>
+      <p>{room.description}</p>
+      <h3>Exits:</h3>
+      <p>{formatExits(room.exits)}</p>
+    </div>
+  );
+}
+
+export { Room, parseRoomData, formatExits };

@@ -1,15 +1,17 @@
 // src/components/AreaVisualizer.js
-
 import React, { useState, useMemo } from 'react';
 import { useTable, useFilters, useGlobalFilter } from 'react-table';
 import './AreaVisualizer.css';
-import Room from './Room';
+import { parseRoomData, formatExits } from './Room';
 import { parseMobileData } from './Mobile';
 
 function AreaVisualizer() {
-  const [areaData, setAreaData] = useState(null);
-  const [selectedSection, setSelectedSection] = useState('rooms');
-
+    const [areaData, setAreaData] = useState(null);
+    const [selectedSection, setSelectedSection] = useState('rooms');
+    const [highlightedVnum, setHighlightedVnum] = useState(null);
+    const handleExitClick = (vnum) => {
+    setHighlightedVnum(vnum);
+  };
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     const decoder = new TextDecoder('iso-8859-9');
@@ -129,6 +131,10 @@ const columns = useMemo(
         Header: 'Description',
         accessor: 'description',
       },
+      {
+        Header: 'Exits',
+        accessor: 'exits',
+      },
     ];
 
     if (selectedSection === 'mobiles') {
@@ -142,6 +148,7 @@ const columns = useMemo(
   },
   [selectedSection]
 );
+
 const data = useMemo(() => {
   if (!areaData) {
     return [];
@@ -150,11 +157,12 @@ const data = useMemo(() => {
   switch (selectedSection) {
     case 'rooms':
       return areaData.rooms.map((roomData) => {
-        const room = Room.parseRoomData(roomData);
+        const room = parseRoomData(roomData);
         return {
           vnum: room.vnum,
           name: room.name,
           description: room.description,
+          exits: formatExits(room.exits),
         };
       });
     case 'mobiles':
@@ -257,13 +265,43 @@ const data = useMemo(() => {
                 ))}
               </thead>
 
+
               <tbody {...getTableBodyProps()}>
                 {rows.map((row) => {
                   prepareRow(row);
+                  const isHighlighted = row.original.vnum === highlightedVnum;
                   return (
-                    <tr {...row.getRowProps()}>
+                    <tr
+                      {...row.getRowProps()}
+                      className={isHighlighted ? 'highlighted' : ''}
+                      ref={isHighlighted ? (ref) => {
+                        if (ref) {
+                          ref.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                      } : null}
+                    >
                       {row.cells.map((cell) => (
-                        <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+                        <td {...cell.getCellProps()}>
+                          {cell.column.id === 'exits' ? (
+                            <span
+                              dangerouslySetInnerHTML={{
+                                __html: cell.value.replace(
+                                  /\((\d+)\)/g,
+                                  `(<a href="#" data-vnum="$1" class="exit-link">$1</a>)`
+                                ),
+                              }}
+                              onClick={(e) => {
+                                if (e.target.classList.contains('exit-link')) {
+                                  e.preventDefault();
+                                  const vnum = parseInt(e.target.dataset.vnum, 10);
+                                  handleExitClick(vnum);
+                                }
+                              }}
+                            />
+                          ) : (
+                            cell.render('Cell')
+                          )}
+                        </td>
                       ))}
                     </tr>
                   );
@@ -276,5 +314,4 @@ const data = useMemo(() => {
     </div>
   );
 }
-
 export default AreaVisualizer;

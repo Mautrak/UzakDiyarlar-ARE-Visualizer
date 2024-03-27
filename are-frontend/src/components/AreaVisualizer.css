@@ -76,3 +76,13 @@ th {
   background-color: #f2f2f2;
   font-weight: bold;
 }
+
+.exit-link {
+  color: blue;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.highlighted {
+  background-color: yellow;
+}
