@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { useTable, useFilters, useGlobalFilter } from 'react-table';
 import './AreaVisualizer.css';
 import Room from './Room';
-import Mobile from './Mobile'; // Add this import statement
+import { parseMobileData } from './Mobile';
 
 function AreaVisualizer() {
   const [areaData, setAreaData] = useState(null);
@@ -114,24 +114,27 @@ const parseAreaFile = (content) => {
   setAreaData(parsedData);
 };
 
-  const columns = useMemo(
-    () => [
-      {
-        Header: 'Vnum',
-        accessor: 'vnum',
-      },
-      {
-        Header: 'Name',
-        accessor: 'name',
-      },
-      {
-        Header: 'Description',
-        accessor: 'description',
-      },
-    ],
-    []
-  );
-
+const columns = useMemo(
+  () => [
+    {
+      Header: 'Vnum',
+      accessor: 'vnum',
+    },
+    {
+      Header: 'Name',
+      accessor: 'name',
+    },
+    {
+      Header: 'Description',
+      accessor: 'description',
+    },
+    {
+      Header: 'Race',
+      accessor: 'race',
+    },
+  ],
+  []
+);
 const data = useMemo(() => {
   if (!areaData) {
     return [];
@@ -148,16 +151,15 @@ const data = useMemo(() => {
         };
       });
     case 'mobiles':
-      return areaData.mobiles.map((mobileData) => {
-        const mobile = Mobile.parseMobileData(mobileData);
-        return {
-          vnum: mobile.vnum,
-          keywords: mobile.keywords,
-          shortDescription: mobile.shortDescription,
-          longDescription: mobile.longDescription,
-          description: mobile.description,
-        };
-      });
+  return areaData.mobiles.map((mobileData) => {
+    const mobile = parseMobileData(mobileData);
+    return {
+      vnum: mobile.vnum,
+      name: mobile.keywords,
+      description: mobile.description,
+      race: mobile.race,
+    };
+  });
     case 'objects':
       return areaData.objects;
     default:
