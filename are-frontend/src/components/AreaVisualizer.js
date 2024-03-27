@@ -115,25 +115,32 @@ const parseAreaFile = (content) => {
 };
 
 const columns = useMemo(
-  () => [
-    {
-      Header: 'Vnum',
-      accessor: 'vnum',
-    },
-    {
-      Header: 'Name',
-      accessor: 'name',
-    },
-    {
-      Header: 'Description',
-      accessor: 'description',
-    },
-    {
-      Header: 'Race',
-      accessor: 'race',
-    },
-  ],
-  []
+  () => {
+    const baseColumns = [
+      {
+        Header: 'Vnum',
+        accessor: 'vnum',
+      },
+      {
+        Header: 'Name',
+        accessor: 'name',
+      },
+      {
+        Header: 'Description',
+        accessor: 'description',
+      },
+    ];
+
+    if (selectedSection === 'mobiles') {
+      baseColumns.push({
+        Header: 'Race',
+        accessor: 'race',
+      });
+    }
+
+    return baseColumns;
+  },
+  [selectedSection]
 );
 const data = useMemo(() => {
   if (!areaData) {
@@ -151,15 +158,15 @@ const data = useMemo(() => {
         };
       });
     case 'mobiles':
-  return areaData.mobiles.map((mobileData) => {
-    const mobile = parseMobileData(mobileData);
-    return {
-      vnum: mobile.vnum,
-      name: mobile.keywords,
-      description: mobile.description,
-      race: mobile.race,
-    };
-  });
+      return areaData.mobiles.map((mobileData) => {
+        const mobile = parseMobileData(mobileData);
+        return {
+          vnum: mobile.vnum,
+          name: mobile.keywords,
+          description: mobile.description,
+          race: mobile.race,
+        };
+      });
     case 'objects':
       return areaData.objects;
     default:
