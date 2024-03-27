@@ -1,10 +1,9 @@
 // src/components/AreaVisualizer.js
 
-import React, { useState } from 'react';
-import Mobile from './Mobile';
-import Object from './Object';
-import Room from './Room';
+import React, { useState, useMemo } from 'react';
+import { useTable, useFilters, useGlobalFilter } from 'react-table';
 import './AreaVisualizer.css';
+import Room from './Room';
 
 function AreaVisualizer() {
   const [areaData, setAreaData] = useState(null);
@@ -16,6 +15,7 @@ function AreaVisualizer() {
     const content = decoder.decode(await file.arrayBuffer());
     parseAreaFile(content);
   };
+
 
   const parseAreaFile = (content) => {
     const lines = content.split('\n');
@@ -30,7 +30,7 @@ function AreaVisualizer() {
     };
 
     let currentSection = null;
-    let currentRoom = null;
+    let currentRoomData = null;
     let currentMobile = null;
 
     for (let line of lines) {
@@ -59,13 +59,11 @@ function AreaVisualizer() {
         console.log('Parsing specials...');
       } else if (line.startsWith('#')) {
         if (currentSection === 'rooms') {
-          if (currentRoom) {
-            parsedData.rooms.push(currentRoom);
-            console.log('Room parsed:', currentRoom);
+          if (currentRoomData) {
+            parsedData.rooms.push(currentRoomData);
           }
           const vnum = parseInt(line.slice(1));
-          currentRoom = { vnum, name: '', description: '', exits: [] };
-          console.log('New room started:', currentRoom);
+          currentRoomData = { vnum, lines: [] };
         } else if (currentSection === 'mobiles') {
           if (currentMobile) {
             parsedData.mobiles.push(currentMobile);
@@ -95,7 +93,7 @@ function AreaVisualizer() {
         } else if (!currentMobile.description && line.includes('~')) {
           currentMobile.description = line.trim();
           console.log('Mobile description:', currentMobile.description);
-        } else if (line.includes('~')) {
+        } else if (line.match(/^\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+$/)) {
           const stats = line.split(' ');
           currentMobile.stats = {
             act: stats[0],
@@ -108,35 +106,14 @@ function AreaVisualizer() {
             hp: stats[7],
             mana: stats[8],
             damage: stats[9],
-            off: stats[10],
-            imm: stats[11],
-            res: stats[12],
-            vuln: stats[13],
-            material: stats[14] ? stats[14].replace('~', '') : '',
           };
           console.log('Mobile stats:', currentMobile.stats);
         }
       } else if (currentSection === 'objects') {
         // Parse object data and add to parsedData.objects array
         console.log('Parsing object:', line);
-      } else if (currentSection === 'rooms' && currentRoom) {
-        if (!currentRoom.name) {
-          currentRoom.name = line.trim();
-          console.log('Room name:', currentRoom.name);
-        } else if (!currentRoom.description && line !== '~') {
-          currentRoom.description += line + '\n';
-          console.log('Room description:', currentRoom.description);
-        } else if (line.startsWith('D')) {
-          const exitData = line.split(/~/);
-          const direction = exitData[0].slice(1).trim();
-          currentRoom.exits.push({ direction });
-          console.log('Room exit:', direction);
-        } else if (line === 'S') {
-          currentRoom.description = currentRoom.description.trim();
-          parsedData.rooms.push(currentRoom);
-          console.log('Room completed:', currentRoom);
-          currentRoom = null;
-        }
+      } else if (currentSection === 'rooms' && currentRoomData) {
+        currentRoomData.lines.push(line);
       } else if (currentSection === 'resets') {
         // Parse reset data and add to parsedData.resets array
         console.log('Parsing reset:', line);
@@ -149,10 +126,8 @@ function AreaVisualizer() {
       }
     }
 
-    if (currentRoom) {
-      currentRoom.description = currentRoom.description.trim();
-      parsedData.rooms.push(currentRoom);
-      console.log('Final room:', currentRoom);
+    if (currentRoomData) {
+      parsedData.rooms.push(currentRoomData);
     }
 
     if (currentMobile) {
@@ -163,24 +138,66 @@ function AreaVisualizer() {
     console.log('Parsed data:', parsedData);
     setAreaData(parsedData);
   };
-  const renderSection = () => {
+
+  const columns = useMemo(
+    () => [
+      {
+        Header: 'Vnum',
+        accessor: 'vnum',
+      },
+      {
+        Header: 'Name',
+        accessor: 'name',
+      },
+      {
+        Header: 'Description',
+        accessor: 'description',
+      },
+    ],
+    []
+  );
+
+  const data = useMemo(() => {
+    if (!areaData) {
+      return [];
+    }
+
     switch (selectedSection) {
       case 'rooms':
-        return areaData.rooms.map((room, index) => (
-          <Room key={index} room={room} />
-        ));
+        return areaData.rooms.map((roomData) => {
+          const room = Room.parseRoomData(roomData);
+          return {
+            vnum: room.vnum,
+            name: room.name,
+            description: room.description,
+          };
+        });
       case 'mobiles':
-        return areaData.mobiles.map((mobile, index) => (
-          <Mobile key={index} mobile={mobile} />
-        ));
+        return areaData.mobiles;
       case 'objects':
-        return areaData.objects.map((object, index) => (
-          <Object key={index} object={object} />
-        ));
+        return areaData.objects;
       default:
-        return null;
+        return [];
     }
-  };
+  }, [areaData, selectedSection]);
+
+  const tableInstance = useTable(
+    { columns, data },
+    useFilters,
+    useGlobalFilter
+  );
+
+  const {
+    getTableProps,
+    getTableBodyProps,
+    headerGroups,
+    rows,
+    prepareRow,
+    state,
+    setGlobalFilter,
+  } = tableInstance;
+
+  const { globalFilter } = state;
 
   return (
     <div className="area-visualizer">
@@ -225,7 +242,42 @@ function AreaVisualizer() {
               </li>
             </ul>
           </div>
-          <div className="main-content">{renderSection()}</div>
+          <div className="main-content">
+            <div className="filter-input">
+              <input
+                type="text"
+                value={globalFilter || ''}
+                onChange={(e) => setGlobalFilter(e.target.value)}
+                placeholder="Search"
+              />
+            </div>
+            <table {...getTableProps()}>
+              <thead>
+                {headerGroups.map((headerGroup) => (
+                  <tr {...headerGroup.getHeaderGroupProps()}>
+                    {headerGroup.headers.map((column) => (
+                      <th {...column.getHeaderProps()}>
+                        {column.render('Header')}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+
+              <tbody {...getTableBodyProps()}>
+                {rows.map((row) => {
+                  prepareRow(row);
+                  return (
+                    <tr {...row.getRowProps()}>
+                      {row.cells.map((cell) => (
+                        <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

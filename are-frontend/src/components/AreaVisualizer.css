@@ -52,11 +52,27 @@
   flex: 1;
 }
 
-.room,
-.mobile,
-.object {
-  margin-bottom: 20px;
-  padding: 20px;
+.filter-input {
+  margin-bottom: 10px;
+}
+
+.filter-input input {
+  padding: 5px;
+  width: 200px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 10px;
   border: 1px solid #ccc;
-  border-radius: 4px;
+}
+
+th {
+  background-color: #f2f2f2;
+  font-weight: bold;
 }
