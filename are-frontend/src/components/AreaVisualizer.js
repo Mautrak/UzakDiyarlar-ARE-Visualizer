@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { useTable, useFilters, useGlobalFilter } from 'react-table';
 import './AreaVisualizer.css';
 import Room from './Room';
+import Mobile from './Mobile'; // Add this import statement
 
 function AreaVisualizer() {
   const [areaData, setAreaData] = useState(null);
@@ -17,127 +18,93 @@ function AreaVisualizer() {
   };
 
 
-  const parseAreaFile = (content) => {
-    const lines = content.split('\n');
-    const parsedData = {
-      areaInfo: {},
-      mobiles: [],
-      objects: [],
-      rooms: [],
-      resets: [],
-      shops: [],
-      specials: [],
-    };
-
-    let currentSection = null;
-    let currentRoomData = null;
-    let currentMobile = null;
-
-    for (let line of lines) {
-      line = line.trim();
-
-      if (line.startsWith('#AREADATA')) {
-        currentSection = 'areaInfo';
-        console.log('Parsing area info...');
-      } else if (line.startsWith('#NEW_MOBILES')) {
-        currentSection = 'mobiles';
-        console.log('Parsing mobiles...');
-      } else if (line.startsWith('#OBJECTS')) {
-        currentSection = 'objects';
-        console.log('Parsing objects...');
-      } else if (line.startsWith('#ROOMS')) {
-        currentSection = 'rooms';
-        console.log('Parsing rooms...');
-      } else if (line.startsWith('#RESETS')) {
-        currentSection = 'resets';
-        console.log('Parsing resets...');
-      } else if (line.startsWith('#SHOPS')) {
-        currentSection = 'shops';
-        console.log('Parsing shops...');
-      } else if (line.startsWith('#SPECIALS')) {
-        currentSection = 'specials';
-        console.log('Parsing specials...');
-      } else if (line.startsWith('#')) {
-        if (currentSection === 'rooms') {
-          if (currentRoomData) {
-            parsedData.rooms.push(currentRoomData);
-          }
-          const vnum = parseInt(line.slice(1));
-          currentRoomData = { vnum, lines: [] };
-        } else if (currentSection === 'mobiles') {
-          if (currentMobile) {
-            parsedData.mobiles.push(currentMobile);
-            console.log('Mobile parsed:', currentMobile);
-          }
-          const vnum = parseInt(line.slice(1));
-          currentMobile = { vnum, keywords: '', shortDescription: '', longDescription: '', description: '', stats: {} };
-          console.log('New mobile started:', currentMobile);
-        } else {
-          currentSection = null;
-          console.log('Ignoring line:', line);
-        }
-      } else if (currentSection === 'areaInfo') {
-        const [key, value] = line.split(/\s+/);
-        parsedData.areaInfo[key] = value;
-        console.log('Area info:', key, value);
-      } else if (currentSection === 'mobiles' && currentMobile) {
-        if (!currentMobile.keywords) {
-          currentMobile.keywords = line.trim();
-          console.log('Mobile keywords:', currentMobile.keywords);
-        } else if (!currentMobile.shortDescription && line.includes('~')) {
-          currentMobile.shortDescription = line.trim();
-          console.log('Mobile short description:', currentMobile.shortDescription);
-        } else if (!currentMobile.longDescription && line.includes('~')) {
-          currentMobile.longDescription = line.trim();
-          console.log('Mobile long description:', currentMobile.longDescription);
-        } else if (!currentMobile.description && line.includes('~')) {
-          currentMobile.description = line.trim();
-          console.log('Mobile description:', currentMobile.description);
-        } else if (line.match(/^\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+$/)) {
-          const stats = line.split(' ');
-          currentMobile.stats = {
-            act: stats[0],
-            affect: stats[1],
-            align: stats[2],
-            type: stats[3],
-            level: stats[4],
-            hitroll: stats[5],
-            damroll: stats[6],
-            hp: stats[7],
-            mana: stats[8],
-            damage: stats[9],
-          };
-          console.log('Mobile stats:', currentMobile.stats);
-        }
-      } else if (currentSection === 'objects') {
-        // Parse object data and add to parsedData.objects array
-        console.log('Parsing object:', line);
-      } else if (currentSection === 'rooms' && currentRoomData) {
-        currentRoomData.lines.push(line);
-      } else if (currentSection === 'resets') {
-        // Parse reset data and add to parsedData.resets array
-        console.log('Parsing reset:', line);
-      } else if (currentSection === 'shops') {
-        // Parse shop data and add to parsedData.shops array
-        console.log('Parsing shop:', line);
-      } else if (currentSection === 'specials') {
-        // Parse special data and add to parsedData.specials array
-        console.log('Parsing special:', line);
-      }
-    }
-
-    if (currentRoomData) {
-      parsedData.rooms.push(currentRoomData);
-    }
-
-    if (currentMobile) {
-      parsedData.mobiles.push(currentMobile);
-      console.log('Final mobile:', currentMobile);
-    }
-
-    console.log('Parsed data:', parsedData);
-    setAreaData(parsedData);
+const parseAreaFile = (content) => {
+  const lines = content.split('\n');
+  const parsedData = {
+    areaInfo: {},
+    mobiles: [],
+    objects: [],
+    rooms: [],
+    resets: [],
+    shops: [],
+    specials: [],
   };
+
+  let currentSection = null;
+  let currentRoomData = null;
+  let currentMobileData = null;
+
+  for (let line of lines) {
+    line = line.trim();
+
+    if (line.startsWith('#AREADATA')) {
+      currentSection = 'areaInfo';
+      console.log('Parsing area info...');
+    } else if (line.startsWith('#NEW_MOBILES')) {
+      currentSection = 'mobiles';
+      console.log('Parsing mobiles...');
+    } else if (line.startsWith('#OBJECTS')) {
+      currentSection = 'objects';
+      console.log('Parsing objects...');
+    } else if (line.startsWith('#ROOMS')) {
+      currentSection = 'rooms';
+      console.log('Parsing rooms...');
+    } else if (line.startsWith('#RESETS')) {
+      currentSection = 'resets';
+      console.log('Parsing resets...');
+    } else if (line.startsWith('#SHOPS')) {
+      currentSection = 'shops';
+      console.log('Parsing shops...');
+    } else if (line.startsWith('#SPECIALS')) {
+      currentSection = 'specials';
+      console.log('Parsing specials...');
+    } else if (line.startsWith('#')) {
+      if (currentSection === 'rooms') {
+        if (currentRoomData) {
+          parsedData.rooms.push(currentRoomData);
+        }
+        const vnum = parseInt(line.slice(1));
+        currentRoomData = { vnum, lines: [] };
+      } else if (currentSection === 'mobiles') {
+        if (line.startsWith('#')) {
+          if (currentMobileData) {
+            parsedData.mobiles.push(currentMobileData);
+          }
+          const vnum = parseInt(line.slice(1));
+          currentMobileData = { vnum, lines: [] };
+        } else if (currentMobileData) {
+          currentMobileData.lines.push(line);
+        }
+      }
+    } else if (currentSection === 'objects') {
+      // Parse object data and add to parsedData.objects array
+      console.log('Parsing object:', line);
+    } else if (currentSection === 'rooms' && currentRoomData) {
+      currentRoomData.lines.push(line);
+    } else if (currentSection === 'resets') {
+      // Parse reset data and add to parsedData.resets array
+      console.log('Parsing reset:', line);
+    } else if (currentSection === 'shops') {
+      // Parse shop data and add to parsedData.shops array
+      console.log('Parsing shop:', line);
+    } else if (currentSection === 'specials') {
+      // Parse special data and add to parsedData.specials array
+      console.log('Parsing special:', line);
+    }
+  }
+
+  if (currentRoomData) {
+    parsedData.rooms.push(currentRoomData);
+  }
+
+  if (currentMobileData) {
+    parsedData.mobiles.push(currentMobileData);
+    console.log('Final mobile:', currentMobileData);
+  }
+
+  console.log('Parsed data:', parsedData);
+  setAreaData(parsedData);
+};
 
   const columns = useMemo(
     () => [
@@ -157,29 +124,38 @@ function AreaVisualizer() {
     []
   );
 
-  const data = useMemo(() => {
-    if (!areaData) {
-      return [];
-    }
+const data = useMemo(() => {
+  if (!areaData) {
+    return [];
+  }
 
-    switch (selectedSection) {
-      case 'rooms':
-        return areaData.rooms.map((roomData) => {
-          const room = Room.parseRoomData(roomData);
-          return {
-            vnum: room.vnum,
-            name: room.name,
-            description: room.description,
-          };
-        });
-      case 'mobiles':
-        return areaData.mobiles;
-      case 'objects':
-        return areaData.objects;
-      default:
-        return [];
-    }
-  }, [areaData, selectedSection]);
+  switch (selectedSection) {
+    case 'rooms':
+      return areaData.rooms.map((roomData) => {
+        const room = Room.parseRoomData(roomData);
+        return {
+          vnum: room.vnum,
+          name: room.name,
+          description: room.description,
+        };
+      });
+    case 'mobiles':
+      return areaData.mobiles.map((mobileData) => {
+        const mobile = Mobile.parseMobileData(mobileData);
+        return {
+          vnum: mobile.vnum,
+          keywords: mobile.keywords,
+          shortDescription: mobile.shortDescription,
+          longDescription: mobile.longDescription,
+          description: mobile.description,
+        };
+      });
+    case 'objects':
+      return areaData.objects;
+    default:
+      return [];
+  }
+}, [areaData, selectedSection]);
 
   const tableInstance = useTable(
     { columns, data },

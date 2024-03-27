@@ -1,29 +1,72 @@
+// src/components/Mobile.js
+
 import React from 'react';
 
-function Mobile(props) {
-  const mobile = props.mobile;
+function Mobile({ mobileData }) {
+  const mobile = Mobile.parseMobileData(mobileData);
 
   return (
     <div className="mobile">
-      <h1>{mobile.keywords} - {mobile.short_description}</h1>
-
-      <h2>Description:</h2>
-      <p>{mobile.description}</p>
-
-      <h2>Stats:</h2>
+      <h2>{mobile.keywords}</h2>
+      <p>Short Description: {mobile.shortDescription}</p>
+      <p>Long Description: {mobile.longDescription}</p>
+      <p>Description: {mobile.description}</p>
+      <h3>Stats:</h3>
       <ul>
-        <li>Level: {mobile.level}</li>
-        <li>Alignment: {mobile.alignment}</li>
-        <li>Sex: {mobile.sex === 0 ? 'Neutral' : mobile.sex === 1 ? 'Male' : 'Female'}</li>
-      </ul>
-
-      <h2>Flags:</h2>
-      <ul>
-        <li>Act Flags: {mobile.act_flags}</li>
-        <li>Affected Flags: {mobile.affected_flags}</li>
+        <li>Act: {mobile.stats.act}</li>
+        <li>Affect: {mobile.stats.affect}</li>
+        <li>Align: {mobile.stats.align}</li>
+        <li>Type: {mobile.stats.type}</li>
+        <li>Level: {mobile.stats.level}</li>
+        <li>Hitroll: {mobile.stats.hitroll}</li>
+        <li>Damroll: {mobile.stats.damroll}</li>
+        <li>HP: {mobile.stats.hp}</li>
+        <li>Mana: {mobile.stats.mana}</li>
+        <li>Damage: {mobile.stats.damage}</li>
       </ul>
     </div>
   );
 }
+
+const parseMobileData = (mobileData) => {
+  const mobile = {
+    vnum: mobileData.vnum,
+    keywords: '',
+    shortDescription: '',
+    longDescription: '',
+    description: '',
+    stats: {},
+  };
+
+  mobileData.lines.forEach((line) => {
+    if (!mobile.keywords) {
+      mobile.keywords = line.trim();
+    } else if (!mobile.shortDescription && line.includes('~')) {
+      mobile.shortDescription = line.trim();
+    } else if (!mobile.longDescription && line.includes('~')) {
+      mobile.longDescription = line.trim();
+    } else if (!mobile.description && line.includes('~')) {
+      mobile.description = line.trim();
+    } else if (line.match(/^\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+$/)) {
+      const stats = line.split(' ');
+      mobile.stats = {
+        act: stats[0],
+        affect: stats[1],
+        align: stats[2],
+        type: stats[3],
+        level: stats[4],
+        hitroll: stats[5],
+        damroll: stats[6],
+        hp: stats[7],
+        mana: stats[8],
+        damage: stats[9],
+      };
+    }
+  });
+
+  return mobile;
+};
+
+Mobile.parseMobileData = parseMobileData;
 
 export default Mobile;
