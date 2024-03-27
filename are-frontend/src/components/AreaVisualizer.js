@@ -33,54 +33,64 @@ const parseAreaFile = (content) => {
   let currentSection = null;
   let currentRoomData = null;
   let currentMobileData = null;
+  let processAreaData = false; // Flag to control processing of area data
 
   for (let line of lines) {
     line = line.trim();
 
+    if (line === 'END' && currentSection === 'areaInfo') {
+      processAreaData = false; // Stop processing area data after END tag
+      continue;
+    }
+
     if (line.startsWith('#AREADATA')) {
       currentSection = 'areaInfo';
-      console.log('Parsing area info...');
+      processAreaData = true; // Start processing area data
     } else if (line.startsWith('#NEW_MOBILES')) {
       currentSection = 'mobiles';
-      console.log('Parsing mobiles...');
     } else if (line.startsWith('#OBJECTS')) {
       currentSection = 'objects';
-      console.log('Parsing objects...');
     } else if (line.startsWith('#ROOMS')) {
       currentSection = 'rooms';
-      console.log('Parsing rooms...');
     } else if (line.startsWith('#RESETS')) {
       currentSection = 'resets';
-      console.log('Parsing resets...');
     } else if (line.startsWith('#SHOPS')) {
       currentSection = 'shops';
-      console.log('Parsing shops...');
     } else if (line.startsWith('#SPECIALS')) {
       currentSection = 'specials';
-      console.log('Parsing specials...');
+    } else if (currentSection === 'areaInfo' && processAreaData && (line.includes('~') || line.match(/^\S+\s+\d+/))) {
+      // Handle both tilde-terminated and direct key-value pairs within area data
+      let [key, ...valueArr] = line.split(/\s+/);
+      let value = valueArr.join(' ');
+      if (value.includes('~')) {
+        value = value.replace(/~/g, '');
+      }
+      parsedData.areaInfo[key] = value;
     } else if (line.startsWith('#')) {
       if (currentSection === 'rooms') {
         if (currentRoomData) {
           parsedData.rooms.push(currentRoomData);
         }
-        const vnum = parseInt(line.slice(1));
+        const vnum = parseInt(line.slice(1), 10);
         currentRoomData = { vnum, lines: [] };
       } else if (currentSection === 'mobiles') {
-        if (line.startsWith('#')) {
-          if (currentMobileData) {
-            parsedData.mobiles.push(currentMobileData);
-          }
-          const vnum = parseInt(line.slice(1));
-          currentMobileData = { vnum, lines: [] };
-        } else if (currentMobileData) {
-          currentMobileData.lines.push(line);
+        if (currentMobileData) {
+          parsedData.mobiles.push(currentMobileData);
         }
+        const vnum = parseInt(line.slice(1), 10);
+        currentMobileData = { vnum, lines: [] };
       }
+    } else if (currentSection === 'rooms' && currentRoomData) {
+      currentRoomData.lines.push(line);
+    } else if (currentSection === 'mobiles' && currentMobileData) {
+      currentMobileData.lines.push(line);
     } else if (currentSection === 'objects') {
       // Parse object data and add to parsedData.objects array
       console.log('Parsing object:', line);
     } else if (currentSection === 'rooms' && currentRoomData) {
       currentRoomData.lines.push(line);
+    } else if (currentSection === 'mobiles' && currentMobileData) {
+      currentMobileData.lines.push(line);
     } else if (currentSection === 'resets') {
       // Parse reset data and add to parsedData.resets array
       console.log('Parsing reset:', line);
@@ -96,10 +106,8 @@ const parseAreaFile = (content) => {
   if (currentRoomData) {
     parsedData.rooms.push(currentRoomData);
   }
-
   if (currentMobileData) {
     parsedData.mobiles.push(currentMobileData);
-    console.log('Final mobile:', currentMobileData);
   }
 
   console.log('Parsed data:', parsedData);

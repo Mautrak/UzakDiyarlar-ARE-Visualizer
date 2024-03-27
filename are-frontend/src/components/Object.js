@@ -1,3 +1,6 @@
+// src/components/Object.js
+
+
 import React from 'react';
 
 function Object(props) {
