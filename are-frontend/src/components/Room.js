@@ -3,6 +3,7 @@
 import React from 'react';
 
 
+
 const parseRoomData = (roomData) => {
   const room = {
     vnum: roomData.vnum,
@@ -25,15 +26,19 @@ const parseRoomData = (roomData) => {
       } else {
         descriptionLines.push(line.trim());
       }
-    } else if (currentField === 'exits' && line.startsWith('D')) {
-      const exitData = line.split(/~/);
-      const direction = exitData[0].slice(1).trim();
-      let toRoom = 0;
-      if (exitData.length >= 5) {
-        const toRoomData = exitData[4].trim().split(/\s+/);
-        toRoom = parseInt(toRoomData[toRoomData.length - 1], 10);
+    } else if (currentField === 'exits') {
+      if (line.startsWith('D')) {
+        const direction = line.slice(1).trim();
+        room.exits.push({ direction, toRoom: 0 });
+      } else if (line.match(/^\d+\s+[-\dCD]+\s+\d+$/)) {
+        const exitData = line.split(/\s+/);
+        const toRoom = parseInt(exitData[2], 10);
+        if (room.exits.length > 0) {
+          room.exits[room.exits.length - 1].toRoom = toRoom;
+        }
+      } else if (line.startsWith('S')) {
+        currentField = '';
       }
-      room.exits.push({ direction, toRoom });
     }
   });
 
@@ -43,6 +48,7 @@ const parseRoomData = (roomData) => {
 
   return room;
 };
+
 
 
 const formatExits = (exits) => {
